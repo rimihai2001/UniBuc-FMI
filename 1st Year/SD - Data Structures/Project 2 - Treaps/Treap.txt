@@ -1,0 +1,174 @@
+	
+#include <bits/stdc++.h>
+using namespace std;
+ifstream fin("abce.in");
+ofstream fout("abce.out");
+ 
+struct Nod
+{
+    int key;
+    int priority;
+    Nod* left_son;
+    Nod* right_son;
+};
+ 
+struct treap
+{
+    Nod* root;           ///declaram radacina
+    void insertnode(int x)
+    {
+        insertion(root, x);
+    }
+    void insertion(Nod* & node, int x)
+    {
+        if(node == NULL) ///daca e NULL/radacina, il generam si il punem ca radacina
+        {
+            node = new Nod;
+            node -> key = x;
+            node -> priority = rand();
+            node -> left_son = NULL;
+            node -> right_son = NULL;
+            return;
+        }
+        if(x <= node -> key)insertion(node -> left_son, x); ///daca cheia este mai mare/mai mica, mergem pe ramura corespunzatoare
+        else insertion(node -> right_son, x);
+    }
+    void rotate_left(Nod* & node) ///rebalansare pe stanga
+    {
+        Nod* aux = node -> left_son;
+        node -> left_son = aux -> right_son;
+        aux -> right_son = node;
+        node = aux;
+    }
+    void rotate_right(Nod* & node) ///rebalansare pe dreapta
+    {
+        Nod* aux = node -> right_son;
+        node -> right_son = aux -> left_son;
+        aux -> left_son = node;
+        node = aux;
+    }
+    void erasenode(int x)
+    {
+        eraser(root, x);
+    }
+    void eraser(Nod* & node, int x) ///stergere
+    {
+        if(node == NULL)return; ///daca nu gaseste
+        if(x < node -> key)eraser(node -> left_son, x); ///daca e mai mic
+        else if(x > node -> key)eraser(node -> right_son, x); ///daca e mai mare
+        else
+        {
+            if(node -> left_son == NULL and node -> right_son == NULL) ///daca nu are fii
+            {
+                delete node;
+                node = NULL;
+                return;
+            }
+            else if(node -> left_son == NULL) ///daca nu are fiu stang
+            {
+                rotate_right(node);
+                eraser(node, x);
+            }
+            else if(node -> right_son == NULL) ///daca nu are fiu drept
+            {
+                rotate_left(node);
+                eraser(node, x);
+            }
+            else if(node -> left_son -> priority > node -> right_son -> priority) ///daca are 2 fii
+            {
+                rotate_left(node);
+                eraser(node, x);
+            }
+            else ///daca are 2 fii
+            {
+                rotate_right(node);
+                eraser(node, x);
+            }
+        }
+    }
+    int predecesor(int x)
+    {
+        return aux_predd(root, x);
+    }
+    int aux_predd(Nod * & node, int x)
+    {
+        if(node == NULL)return INT_MIN; ///daca nu exista, returnam "infinit"
+        if(node -> key <= x)return max(node -> key, aux_predd(node -> right_son, x)); ///daca e mai mic return maximul dintre actualul nod si nodurile din tanga
+        else return aux_predd(node -> left_son, x); ///daca e mai mare cheia, ne intereseaza partea stanga
+    }
+    int succesor(int x)
+    {
+        return aux_suc(root, x);
+    }
+    int aux_suc(Nod * & node, int x)
+    {
+        if(node == NULL)return INT_MAX; ///daca nu exista, returnam "infinit"
+        if(node -> key >= x)return min(node -> key, aux_suc(node -> left_son, x)); ///daca e mai mare returnam minimul dintre nodul actual si tot ce e in stanga
+        else return aux_suc(node -> right_son, x); ///daca e mai mare mergem in dreapta
+    }
+    int este_in(int x)
+    {
+        return este_in_search(root, x);
+    }
+    int este_in_search(Nod* & node, int x) ///cautare
+    {
+        if(node == NULL)return 0; ///nu exista
+        if(node -> key == x)return 1; ///gasit
+        if(node -> key > x)return este_in_search(node -> left_son, x); ///daca e mai mare cautam in stanga
+        else return este_in_search(node -> right_son, x); ///daca e mai mic cautam in dreapta
+    }
+    void arbore_sortat(int st, int dr)
+    {
+        sorteaza(root, st, dr);
+    }
+    void sorteaza(Nod* & node, int st, int dr) ///sortare
+    {
+        if(node == NULL)return; ///oprire/nu exista
+        sorteaza(node -> left_son, st, dr);
+        if(st <= node -> key and node -> key <= dr) fout << node -> key << " "; ///daca e intre capete afisam
+        sorteaza(node -> right_son, st, dr);
+    }
+};
+treap tre;
+int st, dr;
+int main()
+{
+    int q,op,x;
+    fin >> q;
+    for(int i = 1; i <= q; i ++)
+    {
+        fin >> op;
+        if(op == 1)
+        {
+            fin >> x;
+            tre.insertnode(x);
+        }
+        if(op == 2)
+        {
+            fin >> x;
+            tre.erasenode(x);
+        }
+        if(op == 3)
+        {
+            fin >> x;
+            fout << tre.este_in(x) << '\n';
+        }
+        if(op == 4)
+        {
+            fin >> x;
+            fout << tre.predecesor(x) << '\n';
+        }
+        if(op == 5)
+        {
+            fin >> x;
+            fout << tre.succesor(x) << '\n';
+        }
+        if(op == 6)
+        {
+            fin >> st >> dr;
+            tre.arbore_sortat(st, dr);
+            fout << '\n';
+        }
+    }
+    return 0;
+}
