@@ -1,0 +1,366 @@
+.data
+        v: .space 400                           # vector de maxim 100 elem
+        bfscoada: .space 400                    # vector verificare BFS
+        bfsviz:   .space 400                    # vector vizitare BFS
+	matrix:   .space 1600 			# matrice de 20 * 20 * 4 (fiecare element are 4 bytes in memorie)
+	n:	  .space 4			# numarul de linii = numarul de coloane
+        c:        .space 4                      # numarul cerintei
+	nrMuchii: .space 4			# numarul de muchii de citit
+        host1:    .space 4                      # host 1 cerinta 3
+        host2:    .space 4                      # host 2 cerinta 3
+        str:      .space 20                     # sirul introdus pt cerinta 3
+	strnl:	  .asciiz "\n"                  # sir endline
+        strswitch:.asciiz "switch malitios index "  
+        strcont:  .asciiz "controller index "
+        strhost:  .asciiz "host index "
+        strswn:   .asciiz "switch index "
+        str1:     .asciiz "; "                  #;
+        str2:     .asciiz ": "                  #:
+        YES:      .asciiz "Yes"                 #sir "Yes"
+        NO:       .asciiz "No"                  #sir "No"
+       
+        
+.text
+
+main:
+	li $v0, 5				# apel sistem READ WORD
+	syscall
+	
+	sw $v0, n				# val. citita este in $v0 si o mut in n
+
+	li $v0, 5				# apel sistem READ WORD
+	syscall
+
+	sw $v0, nrMuchii			# val. citita este in $v0 si o mut in nrMuchii
+
+	# am citit acum n si nrMuchii, pot sa simulez urmatorul for:
+	# for (int i = 0; i < nrMuchii; i++)
+	# {
+	#	cin>>a;
+	#	cin>>b;
+	#	matrix[a][b] = 1;
+	#	matrix[b][a] = 1;
+	# }
+
+	# pentru a accesa matrix[a][b] voi avea un 
+	# matrix($t4), unde $t4 va fi 4*(a * n + b)
+	# apoi, simetric, pentru matrix[b][a]
+
+	lw $t0, nrMuchii			# iau nrMuchii in $t0
+	lw $t6, n				# punem n in $t6
+	li $t1, 0				# pe post de i din for-ul de mai sus
+
+for_edges:
+	bge $t1, $t0, roles_vector		# execut cat timp i < nrMuchii, i.e. cat timp $t1 < $t0
+						# deci ies cand $t1 >= $t0
+	li $v0, 5
+	syscall
+	move $t2, $v0				# $t2 este acum "left"(a)
+	
+	li $v0, 5
+	syscall
+	move $t3, $v0				# $t3 este acum "right"(b)
+
+	# calculam, pentru inceput, left(a) * n in $t4
+	mul $t4, $t2, $t6			# $t4 = $t2 (left=a) * $t6 (n)
+	# la rezultat, adaugam right=b
+	add $t4, $t4, $t3			# $t4 = $t4 + $t3 (right=b)
+	# il inmultim cu 4
+	mul $t4, $t4, 4				# $t4 = $t4 * 4
+
+	# trebuie acum ca matrix($t4) sa fie egal cu 1
+	li $t5, 1
+	sw $t5, matrix($t4)
+
+	# analog pentru right=b, refolosim $t4
+	mul $t4, $t3, $t6
+	add $t4, $t4, $t2
+	mul $t4, $t4, 4
+	sw $t5, matrix($t4)
+
+	addi $t1, 1				# $t1 := $t1 + 1 i.e. i++
+	j for_edges
+
+
+ roles_vector:
+               li  $t1,0             #din 4 in 4
+               li  $t2,0             #din 1 in 1
+               lw  $t0, n            #stocam n
+               
+  
+          loop:
+               bge $t1,$t0,citire_cerinta #conditie terminare citire
+               li $v0, 5
+               syscall          #citire element vector
+               sw $v0, v($t2)
+
+               addi $t1,$t1,1   #t1++ 
+               addi $t2,$t2,4   #t2=t2+4
+
+               j loop    #go to loop
+  afis_endl:
+           
+           la $a0, strnl
+           li $v0, 4           #AFISARE "\n"
+           syscall
+ 
+           j upd_contor       #go to upd_contor
+
+ citire_cerinta:
+
+                li $v0,5    #citire cerinta
+                syscall
+   
+                move $t5,$v0    #stocare in registru
+                beq  $t5,1,solve_1    #if pentru enunt 1
+                beq  $t5,2,solve_2    #if pentru enunt 2
+                beq  $t5,3,solve_3    #if pentru enunt 3
+
+   solve_1:  
+            li $t1,0           #t1=counter in for
+            li $t2,0           #t2-index curent din vector
+            lw $t0,n           #n in $t0
+          
+       loop2:
+              
+              beq $t0,$t1,et_exit   #conditie oprire
+              lw $t3, v($t2)    #stocam v(t2) in registru
+              beq $t3, 3, element_bun #verificare switch malition
+              j upd_contor   #go to upd_contor
+    
+    
+   upd_contor:
+           addi $t1, $t1, 1   #t1++
+           addi $t2, $t2, 4   #t2=t2+4
+           j loop2            #go to loop2
+
+   element_bun:
+	   la $a0, strswitch
+           li $v0, 4           #AFISARE "switch malitios index "
+           syscall
+           
+           move $a0, $t1
+	   li $v0, 1           #AFISARE ELEMENT
+           syscall
+
+           la $a0, str2
+           li $v0, 4           #AFISARE ": "
+           syscall
+           
+           j verif_in_mat      #go to verif_in_mat
+
+   verif_in_mat:
+           move $t6, $t1
+           mul $t6, $t6, 4     #Prelucrare pozitie matrice
+	   mul $t6, $t6, $t0
+           li $t7,0            #$t7=0
+           
+   parcurgere_linie:
+           beq $t7, $t0, afis_endl
+           lw $t8, matrix($t6)              #$t8 ia valoarea din matrice de pe pozitia $t6
+           beq $t8, 1, verif_in_vector      # Daca exista muchie atunci go to verif_in_vector
+   
+   upd_contor2:
+           addi $t6, $t6, 4        #parcurgere din 4 in 4
+           addi $t7, $t7, 1        #parcurgere din 1 in 1
+           j parcurgere_linie      #go to parcurgere_linie
+
+   verif_in_vector:
+           mul $t5, $t7, 4         #$t5 ia adresa pozitie $t7
+           lw $t8, v($t5)          #$t8 primeste elementul v($t5)
+           beq $t8, 1, afis_host   #if daca e host
+           beq $t8, 2, afis_switch #if daca e switch
+           beq $t8, 3, afis_sm     #if daca e switch malition
+           beq $t8, 4, afis_cl     #if daca e controller logic
+
+   afis_host:
+           la $a0, strhost
+           li $v0, 4           #AFISARE "host index "
+           syscall
+
+           move $a0, $t7
+	   li $v0,1            #AFISARE INDEX ELEMENT
+           syscall
+
+           la $a0, str1
+           li $v0, 4           #AFISARE "; "
+           syscall
+
+           j upd_contor2       #go to upd_contor2
+
+   afis_switch:
+           la $a0, strswn
+           li $v0, 4           #AFISARE "switch index "
+           syscall
+
+           move $a0, $t7
+	   li $v0,1            #AFISARE INDEX ELEMENT
+           syscall
+
+           la $a0, str1
+           li $v0, 4           #AFISARE "; "
+           syscall
+
+           j upd_contor2       #go to upd_contor2
+
+   afis_sm:
+
+	   la $a0, strswitch
+           li $v0, 4          #AFISARE "switch malitios index "
+           syscall
+
+           move $a0, $t7
+	   li $v0,1           #AFISARE ELEMENT
+           syscall
+
+           la $a0, str1
+           li $v0, 4          #AFISARE "; "
+           syscall
+
+           j upd_contor2      #go to upd_contor2
+
+   afis_cl:
+           la $a0, strcont
+           li $v0, 4          #AFISARE "controller index "
+           syscall
+
+           move $a0, $t7
+	   li $v0,1           #AFISARE ELEMENT
+           syscall
+
+           la $a0, str1
+           li $v0, 4          #AFISARE "; "
+           syscall
+           
+           j upd_contor2      #go to upd_contor2
+
+solve_2:
+	
+	li $t0, 0		#index 
+	li $t1, 0		#len(bfscoada)
+	lw $t2, n		#stocam n in $t2
+	li $s2, 0		#s2=0
+	sw $s2, bfscoada($t1)	#nodul 0 in bfscoada
+	li $s3, 1               #s3=1
+	sw $s3, bfsviz($t0)	#bfsviz(0)=1
+	addi $t1, 1		#len(bfscoada)++
+	li $t3, 1		#nod curent
+	
+
+BFS:
+	
+	beq $t1, $t0, graf_conex_afis #daca se termina BFS atunci verificam daca e conex
+
+	mul $t4, $t0, 4       #calculam adresa din pozitie
+	lw $t3, bfscoada($t4) #urcam elementul in coada
+
+	addi $t0, 1 #crestem indexul
+
+	mul $t9, $t3, 4
+	lw $t6, v($t9)           #verificam daca e host
+	bne $t6, 1, host_2_1     #daca nu e host go to host_2_1
+
+	la $a0, strhost
+	li $v0, 4           #AFISARE "host index "
+	syscall
+
+	move $a0, $t3
+	li $v0, 1	    #AFISARE NUMAR HOST
+	syscall
+
+	la $a0, str1
+	li $v0, 4           #AFISARE "; "
+	syscall
+
+	host_2_1:
+
+		li $t4, 0	#pe post de j
+
+		bfsfor:
+
+			beq $t4, $t2, BFS	#conditie terminare for
+		
+			mul $t9, $t3, $t2
+			add $t9, $t9, $t4       #calculam adresa in matrice
+			mul $t9, $t9, 4
+			
+			lw $t6, matrix($t9)     #salvam elementul din matrice in registru
+
+			bne $t6, 1, host_2_2    #daca nu e host go to host_2_2 
+
+			mul $t7, $t4, 4
+			lw $t8, bfsviz($t7)     #verificam daca am mai trecut prin acel nod
+			beq $t8, 1, host_2_2
+
+			mul $t7, $t1, 4
+			sw $t4, bfscoada($t7)   #urcam nodul in coada
+			addi $t1, 1
+
+			li $t8, 1
+			mul $t7, $t4, 4         #actualizam in vectorul de vizitare deoarece am trecut prin acel nod cu parcurgerea
+			sw $t8, bfsviz($t7)
+
+		host_2_2:
+		addi $t4, $t4, 1                #actualizare contor
+		j bfsfor                        #go to bfsfor
+
+	
+afis_yes: #eticheta afisare "Yes"
+
+        la $a0, strnl
+	li $v0, 4 # PRINT STRING           #AFISARE "/n"
+	syscall
+
+	la $a0, YES
+	li $v0, 4 # PRINT STRING           #AFISARE "Yes"
+	syscall
+	
+	j et_exit                          #go to EXIT
+
+graf_conex_afis:   #verificare graf conex
+
+        
+	move $s5,$t4
+        beq $s5,$t0,afis_yes            #daca toate elementele sunt in stiva go to afis_yes
+
+        la $a0, strnl
+	li $v0, 4 # PRINT STRING        #afisare "/n"
+	syscall
+        
+        la $a0, NO
+	li $v0, 4 # PRINT STRING        #afisare "No"
+	syscall
+	
+	j et_exit                       #go to EXIT
+            
+solve_3:
+           
+
+           li $v0, 5				        # citim elementul de inceput
+	   syscall
+	
+	   sw $v0, host1				# stocare valoare in host1
+            
+           li $v0, 5				        # citim elementul de sfarsit
+	   syscall
+	
+	   sw $v0, host2				# stocare valoare in host2
+
+
+           li $v0, 8
+	   la $a0, str    #se citeste cuvantul initial
+	   li $a1, 20
+	   syscall
+
+afisare_cuv:
+           
+           
+           la $a0, str
+           li $v0, 4           #AFISARE Cuvant nemodificat
+           syscall
+    
+           j et_exit           #go to EXIT
+           
+et_exit:
+	li $v0, 10
+	syscall

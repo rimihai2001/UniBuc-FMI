@@ -1,0 +1,93 @@
+.data
+space: .asciiz " "
+X: .word 1, 1, 1, 1, 1, 12, 1, 1, 1, 12 	#X[n]
+N: .word 10					#n
+
+.text
+main:   la $a0, X       #$a0=load address of array X
+    	lw $a1, N       #$a1=10  
+    	
+    	li $t2, 0	#max = 0
+    	li $t3, 1000	#min = 1000
+	li $t4, 0       #no of max app.
+	li $t5, 0       #no of min app.
+    	
+    	j readArray  #call readArray
+    	li $v0, 10      #exit program   
+    	syscall 
+    	
+    	
+readArray:
+    li $t0, 0       		#counter = 0
+    li $t1, 0       		#location of array = 0
+    
+loop:    
+
+    bge $t0, $a1, final 	#if  $t0 >= $a1 then go to final
+    lw $a0, X($t1) 		#$a0 = X(i)
+    beq $a0, $t3, same_min      #if X(i) = min
+    blt $a0, $t3, new_min	#if X(i) < min
+    j check_max
+
+    new_min: move $t3, $a0		#min = X(i)
+	     li $t5, 1
+    j update_counter
+    
+    check_max:
+    beq $a0, $t2, same_max	#if X(i) = max
+    bgt $a0, $t2, new_max	#if X(i) > max
+    j update_counter
+    
+    new_max: move $t2, $a0		#max = X(i)
+	     li $t4,1
+    
+    update_counter:
+    addi $t1, $t1, 4    	#Every 4 bytes there is an integer in the array
+    addi $t0, $t0, 1    	#counter ++
+    j loop       		#go to loop
+
+
+    same_max: addi $t4,$t4,1     #counter of app. ++
+    j update_counter
+
+    same_min: addi $t5,$t5,1     #counter of app. ++
+    j update_counter
+
+
+final:  
+	li $v0, 1		
+	move $a0, $t2		#PRINT MAX
+	syscall			
+
+	la $a0, space   	
+    	li $v0, 4       	#PRINT SPACE              
+    	syscall
+	
+	li $v0, 1		
+	move $a0, $t4		#PRINT NO. OF MAX VALUE
+	syscall			
+	
+	la $a0, space   	
+    	li $v0, 4       	#PRINT SPACE               
+    	syscall
+
+	la $a0, space   	
+    	li $v0, 4       	#PRINT SPACE               
+    	syscall
+
+	la $a0, space   	
+    	li $v0, 4       	#PRINT SPACE               
+    	syscall
+
+	li $v0, 1		
+	move $a0, $t3		#PRINT MIN
+	syscall			
+
+	la $a0, space   	
+    	li $v0, 4       	#PRINT SPACE               
+    	syscall
+
+	li $v0, 1		
+	move $a0, $t5		#PRINT NO. OF MIN VALUE
+	syscall			
+    	jr $ra      		#return

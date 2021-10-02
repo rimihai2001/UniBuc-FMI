@@ -1,0 +1,67 @@
+.data
+	v: .space 400				# int v[100];
+	sp: .asciiz " "
+.text
+main:
+	li $v0, 5
+	syscall					# $v0 contine intregul citit
+
+	move $t0, $v0				# mut in $t0, care va fi pe post de "n"
+	
+	li $t1, 0				# pe post de "i"
+	li $t2, 0				# sare locatii de memorie din 4 in 4
+        li $t3, 0
+	li $t4, 0 
+
+etloop:
+	bge $t1, $t0, etcont
+	
+	li $v0, 5
+	syscall
+
+	sw $v0, v($t2)				# mut din reg. $v0 la locatia de memorie v($t2)
+	
+	addi $t1, $t1, 1
+	addi $t2, $t2, 4
+	j etloop
+
+etcont:
+
+	li $t1, 0				# pe post de "i"
+	li $t2, 0				# sare locatii de memorie din 4 in 4
+	
+
+etafis:
+	bge $t1, $t0, etexit
+	
+	lw $a0, v($t2)
+        add $t3, $t3, $a0                       # calculam suma
+        
+	addi $t1, $t1, 1
+	addi $t2, $t2, 4
+	
+	
+
+	j etafis
+
+        
+etexit:
+
+	move $t4,$t3
+        div $t3, $t3, $t0
+	move $a0, $t3
+	li $v0, 1				# PRINT REMAINDER
+	syscall
+
+	li $a0, 32
+	li $v0, 11  				# PRINT SPACE
+	syscall
+	
+        mul $t3, $t3, $t0
+        sub $t3, $t4, $t3
+	move $a0, $t3
+	li $v0, 1				# PRINT QUOTIENT
+	syscall
+
+	li $v0, 10
+	syscall

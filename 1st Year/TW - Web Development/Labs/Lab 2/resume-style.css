@@ -1,0 +1,147 @@
+.title{
+    font-family: 'Lato',sans-serif;
+    margin: 0;
+    font-size: 38px;
+    font-weight: 900;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.subtitle{
+    color: #999;
+    margin-bottom: 1em;
+    font-family: 'Lato',sans-serif;
+    font-size: 1.5em;
+    line-height:1em;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.menu{
+   width: 990px;
+   margin: 80px auto 0 auto;
+   text-align: center;
+}
+
+.menu-item{
+    display: inline-block;
+    margin-right: 10px;
+    margin-left: 20px;
+    padding: 10px 40px 10px 40px;
+    background-color: white;
+    text-decoration: none;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-family: 'Lato',sans-serif;
+    font-size: 14px;
+    color: #999;
+    vertical-align: baseline ;
+}
+
+.menu-item-active{
+    position:relative;
+    bottom: -1px;
+    color:#c0392b;
+    padding: 15px 40px 15px 40px;
+    margin-top: 0px;
+}
+
+hr{
+    margin-top: 25px;
+    margin-bottom: 25px;
+    border-style: solid;
+    border-top: 1px;
+    border: #f1f1f1;
+}
+
+.resume-title{
+    margin-top: 60px;
+    margin-bottom: 25px;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 36px;
+    font-weight: 700;
+}
+
+.resume-subtitle{
+    font-family: 'Open Sans', sans-serif;
+    font-size: 21px;
+    font-weight: 700;
+    margin-top: 25px;
+    margin-bottom: 25px;
+    display: inline;
+}
+
+p{
+    margin-bottom: 25px;
+    font-family: 'Lato', sans-serif;
+    font-size: 16px;
+}
+
+.resume-date{
+    font-family: 'Lato', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    background-color: #5bc0de;
+    color: white;
+    padding: 4px;
+    text-align: center;
+    border-radius: 5px;
+    float: right;
+    margin-right: 25px;
+}
+
+.skills{
+    font-family: 'Lato', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: white;
+}
+
+.skills-item{
+    font-family: 'Lato', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: white;
+    background-color:green;
+}
+
+li:nth-child(6n+0) {
+    background-color: #5db85c;
+    padding: 2px;
+    text-align: center;
+    border-radius: 5px;
+  }
+li:nth-child(6n+1) {
+    background-color: #f1c40f;
+    padding: 2px;
+    text-align: center;
+    border-radius: 5px;
+  }
+li:nth-child(6n+2) {
+    background-color: #8e44ad;
+    padding: 2px;
+    text-align: center;
+    border-radius: 5px;
+  }
+li:nth-child(6n+3) {
+    background-color: #2c3e50;
+    padding: 2px;
+    text-align: center;
+    border-radius: 5px;
+  }
+
+  li:nth-child(6n+4) {
+    background-color: #c0392b;
+    padding: 2px;
+    text-align: center;
+    border-radius: 5px;
+  }
+
+  li:nth-child(6n+5) {
+    background-color: #555;
+    padding: 2px;
+    text-align: center;
+    border-radius: 5px;
+  }

@@ -1,0 +1,56 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+void radix_sort(vector<int> &arr, int n)
+{
+    int maximum = arr[0];
+
+    for(int i=1; i<n; i++)
+    {
+        maximum = max(maximum, arr[i]);
+    }
+    int digits = 0;
+
+    while(maximum > 0)
+    {
+        digits++;
+        maximum /= 10;
+    }
+    for(int i=0; i<digits; i++)
+    {
+        int power = pow(10, i);
+        int new_array[n];
+        int count[10];
+        memset(count, 0, sizeof(count));
+
+        for(int j=0; j<n; j++)
+        {
+            int num = (arr[j]/power) % 10;
+            count[num]++;
+        }
+        for(int j=1; j<10; j++)
+        {
+            count[j] += count[j-1];
+        }
+        for(int j=n-1; j>=0; j--)
+        {
+            int num = (arr[j]/power) % 10;
+
+            new_array[count[num]-1] = arr[j];
+            count[num]--;
+        }
+
+        for(int j=0; j<n; j++)
+            arr[j] = new_array[j];
+
+    }
+}
+int main()
+{
+
+    vector<int> w = {15, 120, 53, 36, 167, 81, 75, 32, 9, 60};
+
+    radix_sort(w, w.size()-1);
+
+    return 1;
+}

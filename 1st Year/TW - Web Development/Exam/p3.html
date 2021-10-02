@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>P3</title>
+    <script>
+      window.onload = function () {
+        var input = document.getElementById("numar");
+
+        if (localStorage.getItem("number")) {
+          input.value = localStorage.getItem("number");
+        }
+
+        var pars = document.getElementsByTagName("p");
+        var nr = pars.length;
+
+        window.onkeydown = function (ev) {
+            window.onkeydown = null;
+            var tasta = ev.key;
+            var c = setInterval(function () {
+              var x;
+              for (let p of pars) {
+                var nrcuv = 0;
+                var listacuvinte = p.innerHTML.split(" ");
+                console.log(listacuvinte);
+                for (let cuvant of listacuvinte) {
+                  if (cuvant[0] == tasta) {
+                    nrcuv++;
+                  }
+                }
+                if (parseInt(nrcuv) >= parseInt(input.value)) {
+                  x = p;
+                  break;
+                }
+              }
+              if (x) {
+                document.body.removeChild(x);
+              } else {
+                clearInterval(c);
+                localStorage.setItem("number", pars.length);
+              }
+            }, 2000);
+          }
+      };
+    </script>
+  </head>
+  <body>
+    <input type="range" id="numar" min="0" max="5" />
+
+    <p>soare zi examen floare senin</p>
+    <p>soare zi examen floare senina</p>
+    <p>soare zi examen floare</p>
+    <p>soare</p>
+    <p>soare zi examen floare senin caine</p>
+  </body>
+</html>

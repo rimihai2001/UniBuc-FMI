@@ -1,0 +1,98 @@
+Subiectul 1
+
+1.
+
+a)
+
+def factoriprimi(n):
+    fprimi={}
+    contor=2
+    while (n>1):
+        if(n%contor==0):
+            contor2=0
+            while(n%contor==0):
+                contor2+=1
+                n=n//contor
+            fprimi[contor]=contor2
+        contor+=1
+    return fprimi
+
+b)
+
+def numar(dict):
+    n=1
+    for i in dict:
+        n*=i**dict[i]
+    return n
+
+c)
+
+def factoriprimi(n):
+    fprimi={}
+    contor=2
+    while (n>1):
+        if(n%contor==0):
+            contor2=0
+            while(n%contor==0):
+                contor2+=1
+                n=n//contor
+            fprimi[contor]=contor2
+        contor+=1
+    return fprimi
+
+def numar(dict):
+    n=1
+    for i in dict:
+        n*=i**dict[i]
+    return n
+
+def cmmdc(a,b):
+    fprimi=factoriprimi(a)
+    for i in fprimi:
+        if(b%i!=0):
+            fprimi[i]=0
+        else:
+            contor2 = 0
+            while (b % i == 0):
+                contor2 += 1
+                b = b // i
+            fprimi[i] = min(fprimi[i],contor2)
+
+    return numar(fprimi)
+
+
+2.
+
+fin=open("spectacole.txt")
+
+def sortare(vectorspectacole):
+    return vectorspectacole[2]
+
+vectorspectacole=[]
+contor=1
+
+for linie in fin:
+    ore=linie.split("-")
+    vectorspectacole.append((contor,ore[0].strip(),ore[1].strip()))
+    contor+=1
+
+fin.close()
+
+vectorspectacole.sort(key=sortare)
+
+
+numarsp=[]
+sfarsit='00:00'
+contor=0
+for i in range(len(vectorspectacole)):
+    if (vectorspectacole[i][1]>=sfarsit):
+        numarsp.append(vectorspectacole[i])
+        sfarsit=vectorspectacole[i][2]
+        contor+=1
+
+print("Numar maxim de spectacole: ",contor)
+print()
+print("Spectacole programate: ")
+for j in numarsp:
+    print(j[1],"-",j[2],"Spectacolul ",j[0])
+

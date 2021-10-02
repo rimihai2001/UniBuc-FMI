@@ -1,0 +1,148 @@
+Problema 1
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main()
+{
+    unsigned long long a,b;
+    cin>>a>>b;
+    cout<<a+b;
+    return 0;
+}
+
+
+Problema 2
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main()
+{
+    unsigned long long a,b;
+    cin>>a>>b;
+    unsigned long long suma=0;
+    for(unsigned long long i=a; i<=b; i++)
+    {
+        unsigned long long sumdiv=0;
+        for(unsigned long long j=1; j<=i/2; j++)
+            if(i%j==0) sumdiv+=j;
+        if(sumdiv==i)
+            suma+=i;
+        if(i==1) suma++;
+    }
+    cout<<suma;
+    return 0;
+}
+
+
+Problema 3
+
+//am facut cu numar initial de tavi pentru ca am vazut mult prea tarziu ca trebuia functia ADD si nu am reusit sa modific in timpul acordat
+
+#include <bits/stdc++.h>
+
+using namespace std;
+const double pi = 3.14159265358979323846;
+char forma[30],comanda[30];
+int h;
+struct prajituri
+{
+    int arie,volum,gem,frisca;
+}v[100000000];
+int main()
+{
+    int n;
+    cout<<"Numar tavi: ";
+    cin>>n;
+    for(int i=1; i<=n; i++)
+    {
+        cout<<"Forma bazei: ";
+        cin>>forma;
+        if(strcmp(forma,"cerc")==0)
+        {
+            int raza;
+            cout<<"Raza: ";
+            cin>>raza;
+            cout<<"Inaltime: ";
+            cin>>h;
+            v[i].volum=pi*raza*raza*h+1;
+            v[i].arie=2*pi*raza*h+2*pi*raza*raza;
+        }
+        else if(strcmp(forma,"dreptunghi")==0)
+        {
+            int lmica,lmare;
+            cout<<"Laturi: ";
+            cin>>lmica>>lmare;
+            cout<<"Inaltime: ";
+            cin>>h;
+            v[i].volum=lmica*lmare*h;
+            v[i].arie=2*(lmica*lmare)+2*(lmica*h)+2*(lmare*h);
+        }
+        else if(strcmp(forma,"patrat")==0)
+        {
+            int latura;
+            cout<<"Latura: ";
+            cin>>latura;
+            cout<<"Inaltime: ";
+            cin>>h;
+            v[i].volum=latura*latura*h;
+            v[i].arie=2*latura*latura+4*latura*h;
+        }
+        else if(strcmp(forma,"triunghi")==0)
+        {
+            char drept[30];
+            cin>>drept;
+            if(strcmp(drept,"dreptunghic")==0)
+            {
+                int catetamica,catetamare;
+                cout<<"Catete: ";
+                cin>>catetamica>>catetamare;
+                cout<<"Inaltime: ";
+                cin>>h;
+                v[i].volum=catetamare*catetamica*h/2;
+                int ipotenuza=sqrt(catetamare*catetamare+catetamica*catetamica);
+                v[i].arie=catetamare*catetamica+catetamare*h+catetamica*h+ipotenuza*h;
+            }
+            else {cout<<"UNDEFINED! TRY AGAIN"<<endl; i--;}
+        }
+        else {cout<<"UNDEFINED! TRY AGAIN"<<endl; i--;}
+
+        if(double(v[i].volum/2)==int(v[i].volum/2)) v[i].gem=int(v[i].volum/2);
+        else v[i].gem=int(v[i].volum/2)+1;
+        v[i].frisca=v[i].arie;
+        cout<<"Pentru tava "<<i<<" se folosesc "<< v[i].gem<<" grame gem si "<<v[i].frisca<<" grame frisca!"<<endl<<endl;
+    }
+    int ok=1;
+    while(ok==1)
+    {
+        cout<<"REMOVE/STOP: ";
+        cin>>comanda;
+        if(strcmp(comanda,"REMOVE")==0)
+        {
+            int x;
+            cout<<"Vreau sa elimin tava numarul ";
+            cin>>x;
+            v[x].frisca=0;
+            v[x].gem=0;
+            v[x].arie=0;
+            v[x].volum=0;
+        }
+        else if(strcmp(comanda,"STOP")==0)
+            ok=0;
+        else ok=1;
+    }
+    int friscatotal=0,gemtotal=0;
+    for(int i=1; i<=n; i++)
+    {
+        friscatotal=v[i].frisca;
+        gemtotal=v[i].gem;
+    }
+    cout<<"Cantitate totala frisca: "<<friscatotal<<endl;
+    cout<<"Cantitate totala gem: "<<gemtotal<<endl;
+
+    return 0;
+}
+

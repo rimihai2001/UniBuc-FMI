@@ -1,0 +1,65 @@
+.data
+space: .asciiz " "
+sorted: .asciiz "Array is sorted"
+X: .word 1, 2, 3, 4, 5, 6, 7, 8, 9, 12 	        #X[n]
+N: .word 10					#n
+
+.text
+main:   
+        la $a0, X       #$a0=load address of array X
+    	lw $a1, N       #$a1=10  
+    	li $t2, 0	#last element
+    	j readArray     #call readArray
+    	li $v0, 10      #exit program   
+    	syscall 
+    	
+    	
+readArray:
+    li $t0, 0       		#counter = 0
+    li $t1, 0       		#location of array = 0
+    li $t2, 0
+    li $t3, 0
+    
+loop:    
+
+    bge $t0, $a1, final 	#if  $t0 >= $a1 then go to final
+    lw $a0, X($t1) 		#$a0 = X(i)
+    move $t3, $a0
+    j checkperfect
+    
+    update_counter:
+    addi $t1, $t1, 4    	#Every 4 bytes there is an integer in the array
+    addi $t0, $t0, 1    	#counter ++
+    j loop       		#go to loop
+
+checkperfect:
+	
+    move $s0 , $a0      # => Store element in $s0
+    li $s1 , 0          # => The sum of all proper divisors of element
+    li $s2 , 1          # => start here with checks for devisors
+
+s:  
+    bgeu $s2, $s0, eval # while $s2 < $s0
+    rem $t2, $s0, $s2   # $t0 = $s0 % $s2
+    bne $t2, $0, w
+    addu $s1, $s1, $s2  # $s1 += $s2
+
+w:  
+    addi $s2, $s2, 1    # $s2++
+    j s;                # /endwhile
+	
+eval: 
+    seq $s0, $s0, $s1   # Compare the sum of divisors with element
+    bne $s0, $0, non    # go to non
+    la $v0 , 1          # |
+    move $a0 , $t3      # |
+    syscall             # |=> Print $s0
+    la $a0 , space      # |
+    syscall             # |=> Print string "space"
+    j update_counter
+
+non:
+   j update_counter
+
+final:  
+    	jr $ra      		#return
