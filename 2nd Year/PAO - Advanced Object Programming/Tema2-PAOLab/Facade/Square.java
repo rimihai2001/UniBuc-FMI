@@ -1,5 +1,5 @@
 public class Square implements Shape {
-    int lenght;
+    int lenght = 1;
 
     public Square() {
 
