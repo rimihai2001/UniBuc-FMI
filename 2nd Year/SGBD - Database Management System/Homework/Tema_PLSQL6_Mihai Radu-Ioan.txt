@@ -1,0 +1,105 @@
+--Ex 5
+
+--a)
+
+CREATE TABLE emp_test_mri AS (
+    SELECT employee_id, last_name, first_name, department_id
+    FROM employees
+);
+
+ALTER TABLE emp_test_mri
+ADD CONSTRAINT emp_test_mri_pk PRIMARY KEY (employee_id);
+
+CREATE TABLE dept_test_mri AS (
+    SELECT department_id, department_name
+    FROM departments
+);
+
+
+-- VERIFICARI SI STERGERI
+SELECT * FROM emp_test_mri;
+SELECT * FROM dept_test_mri;
+DROP TABLE emp_test_mri;
+DROP TABLE dept_test_mri;
+
+--b)
+
+CREATE OR REPLACE TRIGGER ex5_lab6_stergere_mri
+AFTER DELETE ON dept_test_mri
+FOR EACH ROW
+BEGIN
+    DELETE FROM emp_test_mri
+    WHERE department_id = :OLD.department_id;
+END;
+/
+
+CREATE OR REPLACE TRIGGER ex5_lab6_modificare_mri
+AFTER UPDATE ON dept_test_mri
+FOR EACH ROW
+BEGIN
+    UPDATE emp_test_mri
+    SET department_id = :NEW.department_id
+    WHERE department_id = :OLD.department_id;
+END;
+/
+
+--STERGERE
+DROP TRIGGER ex5_lab6_stergere_mri;
+DROP TRIGGER ex5_lab6_modificare_mri;
+
+--SITUATIILE SPECIALE
+
+ALTER TABLE emp_test_mri
+ADD CONSTRAINT emp_test_dept_fk_mri
+FOREIGN KEY (department_id)
+REFERENCES dept_test_mri(department_id);
+
+ALTER TABLE emp_test_mri
+ADD CONSTRAINT emp_test_dept_fk_mri
+FOREIGN KEY (department_id)
+REFERENCES dept_test_mri(department_id)
+ON DELETE CASCADE;
+
+ALTER TABLE emp_test_mri
+ADD CONSTRAINT emp_test_dept_fk_mri
+FOREIGN KEY (department_id)   
+REFERENCES dept_test_mri(department_id)
+ON DELETE SET NULL;
+
+--STERGERE CONSTRANGERI
+ALTER TABLE emp_test_mri
+DROP CONSTRAINT emp_test_dept_fk_mri;
+
+
+--Ex 6
+
+--a)
+
+CREATE TABLE tabel_erori_mri (
+    user_id VARCHAR2(200),
+    nume_bd  VARCHAR2(200),
+    erori VARCHAR2(200),
+    data DATE
+);
+
+--STERGERE
+DROP TABLE tabel_erori_mri;
+
+--b)
+
+CREATE OR REPLACE TRIGGER ex6_lab5_mri
+AFTER SERVERERROR
+ON DATABASE
+BEGIN
+    INSERT INTO tabel_erori_mri
+    VALUES (
+        SYS.LOGIN_USER,
+        SYS.DATABASE_NAME,
+        DBMS.FORMAT_ERROR_STACK,
+        SYSDATE
+    );
+END;
+/
+
+--STERGERE
+DROP TRIGGER ex6_lab5_mri;

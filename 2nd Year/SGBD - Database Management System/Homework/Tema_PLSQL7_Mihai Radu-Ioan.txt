@@ -1,0 +1,144 @@
+-- Ex 3
+
+DECLARE 
+    nr_ang NUMBER;
+    cod_dep NUMBER;
+    cod_nou NUMBER;
+    nume_dep VARCHAR2(100);
+    are_angajati EXCEPTION;
+BEGIN
+    nr_ang :=0;
+    cod_dep := &cdep_vechi;
+    cod_nou := &cdep_nou;
+    
+    SELECT department_name
+    INTO nume_dep
+    FROM dept_mri
+    WHERE department_id = cod_dep;
+    
+    SELECT count(*)
+    INTO nr_ang
+    FROM emp_mri
+    WHERE department_id = cod_dep
+    GROUP BY department_id;
+    
+    IF nr_ang > 0 THEN
+        RAISE are_angajati;
+    END IF;
+
+    UPDATE dept_mri
+    SET department_id = cod_nou
+    WHERE department_id = cod_dep;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RAISE_APPLICATION_ERROR(-20000,'Numarul dat este invalid');
+    WHEN are_angajati THEN
+        RAISE_APPLICATION_ERROR(-20001,'Departamentul are angajati');
+    WHEN OTHERS THEN
+        RAISE_APPLICATION_ERROR(-20002,'Alta eroare');
+END;
+/
+
+
+--Ex 4
+
+SET SERVEROUTPUT ON;
+DECLARE 
+    nr_ang NUMBER;
+    min_ang NUMBER;
+    max_ang NUMBER;
+    nume_dep VARCHAR2(100);
+    nu_in_limita EXCEPTION;
+BEGIN
+    nr_ang :=0;
+    min_ang := &minim_angajati;
+    max_ang := &maxim_angajati;
+    
+    SELECT department_name
+    INTO nume_dep
+    FROM dept_mri
+    WHERE department_id = 10;
+    
+    SELECT count(*)
+    INTO nr_ang
+    FROM emp_mri
+    WHERE department_id = 10
+    GROUP BY department_id;
+    
+    IF (nr_ang < min_ang OR nr_ang>max_ang) THEN
+        RAISE nu_in_limita;
+    END IF;
+    
+    DBMS_OUTPUT.PUT_LINE(nume_dep);
+EXCEPTION
+    WHEN nu_in_limita THEN
+        RAISE_APPLICATION_ERROR(-20000,'Departamentul nu are angajatii in limita introdusa');
+    WHEN OTHERS THEN
+        RAISE_APPLICATION_ERROR(-20001,'Alta eroare');
+END;
+/
+
+--EX 5
+
+DECLARE 
+    cod_dep NUMBER;
+    nume_dep VARCHAR2(100);
+BEGIN
+    cod_dep := &cod_departament;
+    
+    SELECT department_name
+    INTO nume_dep
+    FROM dept_mri
+    WHERE department_id = cod_dep;
+    
+    UPDATE dept_mri
+    SET department_name = 'Dept_modificat'
+    WHERE department_id = cod_dep;
+    
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RAISE_APPLICATION_ERROR(-20000,'Nu exista departament cu acest cod');
+    WHEN OTHERS THEN
+        RAISE_APPLICATION_ERROR(-20001,'Alta eroare');
+END;
+/
+
+
+--Ex 6
+
+DECLARE
+    v_nume_dep departments.department_name%TYPE;
+    v_nume_dep2 departments.department_name%TYPE;
+    id_dep NUMBER;
+    nume_oras VARCHAR2(100);
+BEGIN
+    BEGIN
+        nume_oras := '&city_name';
+        
+        SELECT department_name 
+        INTO v_nume_dep
+        FROM dept_mri
+        JOIN locations USING (location_id)
+        WHERE lower(city) = lower(nume_oras);
+
+        DBMS_OUTPUT.PUT_LINE('Nume departament: ' || v_nume_dep);
+    EXCEPTION
+        WHEN no_data_found THEN
+            raise_application_error(-20000,'Nu exista departament cu locatia ceruta');
+    END;
+
+    BEGIN
+        id_dep := &id_depart;
+    
+        SELECT department_name 
+        INTO v_nume_dep2
+        FROM dept_mri
+        WHERE department_id = id_dep;
+
+        DBMS_OUTPUT.PUT_LINE('Nume departament: ' || v_nume_dep2);
+    EXCEPTION
+        WHEN no_data_found THEN
+            raise_application_error(-20001,'Nu exista departament cu ID-ul dat');
+    END;
+END;
+/

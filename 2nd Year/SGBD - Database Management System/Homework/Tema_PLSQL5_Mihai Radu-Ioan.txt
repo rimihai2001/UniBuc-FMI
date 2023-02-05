@@ -1,0 +1,405 @@
+--TABELE AUXILIARE
+CREATE TABLE emp_mri AS SELECT * FROM employees;
+CREATE TABLE dept_mri AS SELECT * FROM departments;
+CREATE TABLE job_hist_mri AS SELECT * FROM job_history;
+
+SELECT * FROM emp_mri;
+SELECT * FROM dept_mri;
+SELECT * FROM job_hist_mri;
+
+-- SECVENTA
+CREATE SEQUENCE emp_seq
+START WITH 1000
+INCREMENT BY 1
+NOCACHE NOCYCLE;
+/
+
+--SERVEROUTPUT
+SET SERVEROUTPUT ON;
+
+--PACHET DECLARARE
+CREATE OR REPLACE PACKAGE gestiune_companie
+IS
+    -- a)
+    FUNCTION gaseste_job(
+        nume jobs.job_title%TYPE
+    ) RETURN jobs.job_id%TYPE;
+
+    FUNCTION gaseste_angajat(
+        prenume emp_mri.first_name%TYPE,
+        nume emp_mri.last_name%TYPE
+    ) RETURN emp_mri.employee_id%TYPE;
+
+    FUNCTION gaseste_departament(
+        nume dept_mri.department_name%TYPE
+    ) RETURN dept_mri.department_id%TYPE;
+
+    FUNCTION gaseste_salariu_min(
+        id_dept dept_mri.department_id%TYPE,
+        id_job jobs.job_id%TYPE
+    ) RETURN emp_mri.salary%TYPE;
+
+    
+    FUNCTION gaseste_com_min(
+        id_dept dept_mri.department_id%TYPE,
+        id_job jobs.job_id%TYPE
+    ) RETURN emp_mri.commission_pct%TYPE;
+
+    PROCEDURE adauga(
+        prenume emp_mri.first_name%TYPE,
+        nume emp_mri.last_name%TYPE,
+        adresa_email emp_mri.email%TYPE,
+        telefon emp_mri.phone_number%TYPE,
+        prenume_manager emp_mri.first_name%TYPE,
+        nume_manager emp_mri.last_name%TYPE,
+        nume_departament dept_mri.department_name%TYPE,
+        nume_job jobs.job_title%TYPE
+    );
+
+    -- b)
+    PROCEDURE muta(
+        prenume emp_mri.first_name%TYPE,
+        nume emp_mri.last_name%TYPE,
+        nume_departament dept_mri.department_name%TYPE,
+        nume_job jobs.job_title%TYPE,
+        prenume_manager emp_mri.first_name%TYPE,
+        nume_manager emp_mri.last_name%TYPE
+    );
+
+    -- c)
+    FUNCTION nr_subalterni(
+        prenume emp_mri.first_name%TYPE,
+        nume emp_mri.last_name%TYPE
+    ) RETURN NUMBER;
+    
+    -- d)
+    PROCEDURE promoveaza(cod_ang employees.employee_id%type);
+  
+    -- e)
+    PROCEDURE salariu_actualizare(nr number, nume varchar2);
+
+    --f)
+    CURSOR angajati_job (id_job jobs.job_id%TYPE)
+    RETURN emp_mri%ROWTYPE
+    IS
+    SELECT * FROM emp_mri
+    WHERE job_id = id_job;
+
+    --g)
+    CURSOR toate_joburile
+    RETURN jobs%ROWTYPE
+    IS
+    SELECT * FROM jobs;
+
+    --h)
+    PROCEDURE afiseaza_angajati_per_job;
+END;
+/
+
+--PACHET BODY
+CREATE OR REPLACE PACKAGE BODY gestiune_companie
+IS
+    FUNCTION gaseste_job(
+        nume jobs.job_title%TYPE
+    ) RETURN jobs.job_id%TYPE
+    IS
+        v_id jobs.job_id%TYPE;
+    BEGIN
+        SELECT job_id INTO v_id
+        FROM jobs
+        WHERE lower(job_title) = lower(nume);
+
+        RETURN v_id;
+
+    EXCEPTION
+        WHEN no_data_found THEN
+            raise_application_error(-20000, 'Acest job nu a fost gasit');
+    END;
+
+    FUNCTION gaseste_angajat(
+        prenume emp_mri.first_name%TYPE,
+        nume emp_mri.last_name%TYPE
+    ) RETURN emp_mri.employee_id%TYPE
+    IS
+        v_id emp_mri.employee_id%TYPE;
+    BEGIN
+        SELECT employee_id INTO v_id
+        FROM emp_mri
+        WHERE lower(first_name) = lower(prenume) AND lower(last_name) = lower(nume);
+
+        RETURN v_id;
+
+    EXCEPTION
+        WHEN no_data_found THEN
+            raise_application_error(-20000, 'Angajatul nu a fost gasit');
+    END;
+
+    FUNCTION gaseste_departament(
+        nume dept_mri.department_name%TYPE
+    ) RETURN dept_mri.department_id%TYPE
+    IS
+        v_id dept_mri.department_id%TYPE;
+    BEGIN
+        SELECT department_id INTO v_id
+        FROM dept_mri
+        WHERE department_name = nume;
+
+        RETURN v_id;
+
+    EXCEPTION
+        WHEN no_data_found THEN
+            raise_application_error(-20000, 'Departamentul nu a fost gasit');
+    END;
+
+    FUNCTION gaseste_salariu_min(
+        id_dept dept_mri.department_id%TYPE,
+        id_job jobs.job_id%TYPE
+    ) RETURN emp_mri.salary%TYPE
+    IS
+        v_salariu emp_mri.salary%TYPE;
+    BEGIN
+        SELECT MIN(salary) INTO v_salariu
+        FROM emp_mri
+        WHERE department_id = id_dept AND job_id = id_job;
+
+        IF v_salariu IS NULL THEN
+            raise_application_error(-20000,'Nu exista angajati');
+        END IF;
+
+        RETURN v_salariu;
+    END;
+
+    FUNCTION gaseste_com_min(
+        id_dept dept_mri.department_id%TYPE,
+        id_job jobs.job_id%TYPE
+    ) RETURN emp_mri.commission_pct%TYPE
+    IS
+        v_com emp_mri.commission_pct%TYPE;
+    BEGIN
+        SELECT MIN(commission_pct) INTO v_com
+        FROM emp_mri
+        WHERE department_id = id_dept AND job_id = id_job;
+
+        RETURN v_com;
+    END;
+
+
+    PROCEDURE adauga(
+        prenume emp_mri.first_name%TYPE,
+        nume emp_mri.last_name%TYPE,
+        adresa_email emp_mri.email%TYPE,
+        telefon emp_mri.phone_number%TYPE,
+        prenume_manager emp_mri.first_name%TYPE,
+        nume_manager emp_mri.last_name%TYPE,
+        nume_departament dept_mri.department_name%TYPE,
+        nume_job jobs.job_title%TYPE
+    ) IS
+        v_emp_id emp_mri.employee_id%TYPE;
+        v_dept_id dept_mri.department_id%TYPE;
+        v_job_id emp_mri.job_id%TYPE;
+        v_salariu emp_mri.salary%TYPE;
+    BEGIN
+        v_emp_id := emp_seq.NEXTVAL;
+        v_dept_id := gaseste_departament(nume_departament);
+        v_job_id := gaseste_job(nume_job);
+        v_salariu := gaseste_salariu_min(v_dept_id, v_job_id);
+
+        INSERT INTO emp_mri (
+            employee_id, 
+            first_name, 
+            last_name,
+            email, 
+            phone_number, 
+            hire_date,
+            job_id,
+            salary, 
+            commission_pct,
+            manager_id,
+            department_id
+        )
+        VALUES (
+            v_emp_id, 
+            prenume, 
+            nume,
+            adresa_email, 
+            telefon, 
+            SYSDATE,
+            v_job_id,
+            v_salariu, 0,
+            gaseste_angajat(prenume_manager, nume_manager),
+            v_dept_id
+        );
+    END;
+
+    PROCEDURE muta(
+        prenume emp_mri.first_name%TYPE,
+        nume emp_mri.last_name%TYPE,
+        nume_departament dept_mri.department_name%TYPE,
+        nume_job jobs.job_title%TYPE,
+        prenume_manager emp_mri.first_name%TYPE,
+        nume_manager emp_mri.last_name%TYPE
+    ) IS
+        v_ang emp_mri%ROWTYPE;
+        v_manager_nou emp_mri.employee_id%TYPE;
+        v_dept_nou dept_mri.department_id%TYPE;
+        v_job_nou emp_mri.job_id%TYPE;
+        v_salariu_nou emp_mri.salary%TYPE;
+        v_com_nou emp_mri.commission_pct%TYPE;
+    BEGIN
+        SELECT * INTO v_ang
+        FROM emp_mri
+        WHERE employee_id = gaseste_angajat(prenume, nume);
+
+        INSERT INTO job_hist_mri (
+            employee_id,
+            start_date, end_date,
+            job_id, department_id
+        )
+        VALUES (
+            v_ang.employee_id,
+            v_ang.hire_date, SYSDATE,
+            v_ang.job_id, v_ang.department_id
+        );
+
+        v_dept_nou := gaseste_departament(nume_departament);
+        v_job_nou := gaseste_job(nume_job);
+        v_manager_nou := gaseste_angajat(prenume_manager, nume_manager);
+        v_salariu_nou := gaseste_salariu_min(v_dept_nou, v_job_nou);
+        v_com_nou := gaseste_com_min(v_dept_nou, v_job_nou);
+
+        UPDATE emp_mri
+        SET
+            department_id = v_dept_nou,
+            job_id = v_job_nou,
+            manager_id = v_manager_nou,
+            salary = v_salariu_nou,
+            commission_pct = v_com_nou,
+            hire_date = SYSDATE
+        WHERE employee_id = v_ang.employee_id;
+    END;
+
+    FUNCTION nr_subalterni(
+        prenume emp_mri.first_name%TYPE,
+        nume emp_mri.last_name%TYPE
+    ) RETURN NUMBER
+    IS
+        v_num NUMBER;
+    BEGIN
+        SELECT COUNT(*) INTO v_num
+        FROM employees
+        START WITH employee_id = gaseste_angajat(prenume, nume)
+        CONNECT BY PRIOR employee_id = manager_id;
+
+        RETURN v_num;
+    END;
+    
+  PROCEDURE promoveaza(cod_ang employees.employee_id%type) IS
+  cod_man      employees.manager_id%type;
+  cod_man1     employees.manager_id%type;
+  BEGIN
+    select manager_id
+    into cod_man
+    from employees
+    where employee_id = cod_ang;
+    
+    if cod_man is null
+        then raise_application_error(-20000,'Nu poate fi promovat!');
+    else 
+      select manager_id
+      into cod_man1
+      from employees
+      where employee_id = cod_man;
+      
+      if cod_man1 is null then 
+        update emp_mri
+        set manager_id = null 
+        where employee_id = cod_ang;
+      else
+        update emp_mri
+        set manager_id = cod_man1
+        where employee_id = cod_ang;
+      end if;
+      
+    end if;
+  END promoveaza;
+  
+
+  PROCEDURE salariu_actualizare(nr number, nume varchar2) IS
+  nr_ang       number;
+  cod_job      employees.job_id%type;
+  cod_ang      employees.employee_id%type;
+  minim        number;
+  maxim        number;
+  prenume      employees.last_name%type;
+  BEGIN
+    select count(*)
+    into nr_ang
+    from employees
+    where upper(last_name) = upper(nume);
+    
+    if nr_ang = 1 then
+      select job_id, employee_id
+      into cod_job, cod_ang
+      from employees
+      where upper(last_name) = upper(nume);
+    
+      select min_salary, max_salary
+      into minim, maxim
+      from jobs
+      where job_id = cod_job;
+      
+      if nr >= minim and nr <= maxim then
+        update emp_mri
+        set salary = nr
+        where employee_id = cod_ang;
+      else
+        raise_application_error(-20000,'Salariul nu este in range');
+      end if;
+      
+    elsif nr_ang = 0 then
+      raise_application_error(-20000,'Angajat negasit');
+    else
+      dbms_output.put_line('Angajati cu numele dat: ');
+      for i in (select * from employees where upper(last_name) = upper(nume))
+      loop
+        dbms_output.put_line(i.first_name || ' ' || i.last_name);
+      end loop;
+    end if;
+  END salariu_actualizare;
+
+    PROCEDURE afiseaza_angajati_per_job
+    IS
+        v_nume_job jobs.job_title%TYPE;
+        v_nume_ang VARCHAR2(500);
+        job_contor NUMBER;
+    BEGIN
+        FOR job IN toate_joburile LOOP
+            DBMS_OUTPUT.PUT_LINE(job.job_title || ':');
+
+            FOR emp IN angajati_job(job.job_id) LOOP
+                v_nume_ang := emp.first_name || ' , ' || emp.last_name;
+
+                SELECT COUNT(*) INTO job_contor
+                FROM job_hist_mri
+                WHERE (employee_id = emp.employee_id) AND (job_id = job.job_id);
+
+                DBMS_OUTPUT.PUT_LINE(v_nume_ang ||' -> A mai fost angajat? (0-Nu, >0-Da) ' || job_contor);
+            END LOOP;
+        END LOOP;
+    END;
+END;
+/
+
+--STERGERI
+DROP TABLE emp_mri;
+DROP TABLE dept_mri;
+DROP TABLE job_hist_mri;
+
+DROP SEQUENCE emp_seq;
+DROP PACKAGE gestiune_companie;
+
+
+--SALVARI
+commit;
+rollback;
+

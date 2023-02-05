@@ -1,0 +1,235 @@
+--Ex 1
+
+create table info_mri(utilizator varchar2(100),
+                      data date,
+                      comanda varchar2(100),
+                      nr_linii number(5),
+                      eroare varchar2(100));
+
+--Ex 2
+
+SET SERVEROUTPUT ON;
+
+CREATE OR REPLACE FUNCTION ex_2_lab4_mri(nume employees.last_name%type)
+RETURN NUMBER IS
+  salariu          number(10, 2);
+  data1            date;
+  utilizator       varchar2(100);
+  eroare           varchar2(100);
+  nr_linii         number(5);
+BEGIN
+  select user
+  into utilizator
+  from dual;
+  
+  select sysdate
+  into data1
+  from dual;
+  
+  select count(*)
+  into nr_linii
+  from employees
+  where lower(last_name) = lower(nume);
+  
+  select salary
+  into salariu
+  from employees
+  where lower(last_name) = lower(nume);
+  
+  insert into info_mri values(utilizator, data1, 'select', nr_linii, 'Actiune realizata fara erori!');
+  
+  return 0;
+EXCEPTION
+  when NO_DATA_FOUND then
+    insert into info_mri values(utilizator, data1, 'select', 0, 'Niciun angajat cu numele dat');
+    return -1;
+    
+  when TOO_MANY_ROWS then
+    insert into info_mri values(utilizator, data1, 'select', nr_linii, 'Exista mai multi angajati cu numele dat');
+    return -2;
+  
+  when OTHERS then
+    insert into info_mri values(utilizator, data1, 'select', nr_linii, 'Alta eroare');
+    return -3;
+END ex_2_lab4_mri;
+/
+
+--TESTARE 
+variable x number
+execute :x := ex_2_lab4_mri('Chen');
+execute :x := ex_2_lab4_mri('King');
+execute :x := ex_2_lab4_mri('asfgasgsgg');
+
+drop function ex_2_lab4_mri;
+
+--Ex 3
+
+CREATE OR REPLACE FUNCTION ex_3_lab4_mri (oras locations.city%type)
+RETURN NUMBER IS
+  v_num    number;
+  v_manyjobs  number;
+BEGIN
+  select count(*)
+  into v_num
+  from locations
+  where lower(city) = lower(oras);
+    
+  if v_num = 0 then 
+    insert into info_mri values(user, sysdate, 'count', v_num, 'Nu exista orasul cautat!');
+  else
+    select count(employee_id)
+    into v_num
+    from employees 
+    join departments using(department_id)
+    join locations using(location_id)
+    where lower(city) = lower(oras);
+      
+    if v_num = 0 then 
+      insert into info_mri values(user, sysdate, 'count', v_num, 'Niciun angajat in oras!');
+    else
+      select count(count(*))
+      into v_manyjobs
+      from employees 
+           join departments using(department_id)
+           join locations using(location_id) 
+           join job_history using(employee_id)
+      where lower(city) = lower(oras)
+      group by employee_id
+      having count(job_history.job_id) > 1;
+      insert into info_mri values(user, sysdate, 'count', v_manyjobs, 'Actiune realizata fara erori!');
+    end if;
+  end if;
+  
+  return 0;
+END ex_3_lab4_mri;
+/
+
+--TESTARE
+
+variable x number
+execute :x := ex_3_lab4_mri('Braila');
+execute :x := ex_3_lab4_mri('London');
+execute :x := ex_3_lab4_mri('Beijing');
+
+--Ex 4
+
+CREATE OR REPLACE PROCEDURE ex4_lab4_mri(p_cod employees.employee_id%TYPE)
+IS  
+
+  v_nr         number(5);
+  v_nr_linii   number(5);
+BEGIN
+  select count(*) 
+  into v_nr
+  from emp_mri
+  where employee_id = p_cod;
+    
+  if v_nr=0 then
+    insert into info_mri values(user, sysdate, 'UNKNOWN', v_nr, 'Cod manager inexistent!');
+    
+  else
+    update emp_mri
+    set salary = salary + salary * 0.1
+    where manager_id in (select employee_id
+                         from employees
+                         start with employee_id = p_cod
+                         connect by prior employee_id = manager_id);
+    v_nr_linii := sql%rowcount;
+    insert into info_mri values(user, sysdate, 'update', v_nr_linii, 'Actiune realizata fara erori!');
+  end if;
+  
+END ex4_lab4_mri;
+/
+
+--STERGERE UPDATE
+rollback;
+
+--TESTARE
+BEGIN
+ex4_lab4_mri(399);
+ex4_lab4_mri(100);
+END;
+
+--Ex 5
+
+CREATE OR REPLACE PROCEDURE ex5_lab4_mri IS
+  CURSOR c IS 
+    SELECT department_name, zi, nr_angajati
+    FROM departments LEFT JOIN (SELECT department_id, TO_CHAR(hire_date, 'D') zi, COUNT(*) nr_angajati
+                                FROM employees e
+                                GROUP BY department_id, TO_CHAR(hire_date, 'D')
+                                HAVING COUNT(*) = (SELECT MAX(COUNT(employee_id))
+                                                   FROM employees
+                                                   GROUP BY employees.department_id, TO_CHAR(hire_date, 'D')
+                                                   HAVING department_id = e.department_id)
+                                ) USING (department_id);
+BEGIN
+  FOR linie IN c LOOP
+    IF linie.zi IS NULL THEN
+      dbms_output.put_line('Departamentul ' || upper(linie.department_name) || ' nu are angajati!');
+    ELSE
+      dbms_output.put_line('Departamentul ' || upper(linie.department_name) ||': cele mai multe angajari in ziua ' ||linie.zi || ' (' || linie.nr_angajati || ' angajari): ');
+
+      FOR angajat IN (SELECT first_name || ' ' || last_name nume,
+                             ROUND(SYSDATE - hire_date) vechime,
+                             salary * (1 + NVL(commission_pct, 0)) salariu
+                      FROM employees JOIN departments USING (department_id)
+                      WHERE department_name = linie.department_name AND TO_CHAR(hire_date, 'D') = linie.zi)
+      LOOP
+        dbms_output.put_line(angajat.nume || ' ' || angajat.vechime || ' ' || angajat.salariu);
+     END LOOP;
+     
+    END IF;
+    dbms_output.put_line('-------------------------------------------------------------------------------');
+  END LOOP;
+END;
+/
+
+--TESTARE
+EXECUTE ex5_lab4_mri;
+
+--ex 6
+
+SET SERVEROUTPUT ON;
+
+CREATE OR REPLACE PROCEDURE ex6_lab4_mri IS
+  CURSOR c IS 
+    SELECT department_name, zi, nr_angajati
+    FROM departments LEFT JOIN (SELECT department_id, TO_CHAR(hire_date, 'D') zi, COUNT(*) nr_angajati
+                                FROM employees e
+                                GROUP BY department_id, TO_CHAR(hire_date, 'D')
+                                HAVING COUNT(*) = (SELECT MAX(COUNT(employee_id))
+                                                   FROM employees
+                                                   GROUP BY employees.department_id, TO_CHAR(hire_date, 'D')
+                                                   HAVING department_id = e.department_id)
+                                ) USING (department_id);
+    contor INT;
+BEGIN
+  FOR linie IN c LOOP
+    IF linie.zi IS NULL THEN
+      dbms_output.put_line('Departamentul ' || upper(linie.department_name) || ' nu are angajati!');
+    ELSE
+      dbms_output.put_line('Departamentul ' || upper(linie.department_name) ||': cele mai multe angajari in ziua ' ||linie.zi || ' (' || linie.nr_angajati || ' angajari): ');
+      contor:=1;
+      FOR angajat IN (SELECT first_name || ' ' || last_name nume,
+                             ROUND(SYSDATE - hire_date) vechime,
+                             salary * (1 + NVL(commission_pct, 0)) salariu
+                      FROM employees JOIN departments USING (department_id)
+                      WHERE department_name = linie.department_name AND TO_CHAR(hire_date, 'D') = linie.zi
+                      ORDER BY VECHIME DESC)
+      LOOP
+        dbms_output.put_line(angajat.nume || ' ' || angajat.vechime || ' ' || angajat.salariu ||' -> Pozitie clasament '|| contor);
+        contor := contor+1;
+     END LOOP;
+     
+    END IF;
+    dbms_output.put_line('-------------------------------------------------------------------------------');
+  END LOOP;
+END;
+/
+
+--TESTARE
+EXECUTE ex6_lab4_mri;
+
+
+

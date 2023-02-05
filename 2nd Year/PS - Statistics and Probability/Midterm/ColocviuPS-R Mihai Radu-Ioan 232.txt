@@ -1,0 +1,94 @@
+#Exercitiul 3
+
+v <- c(rnorm(100, 1, 0.3))
+
+#a
+
+print("Media: ")
+print(mean(v))
+
+mode <- function(v) {
+   uniqv <- unique(v)
+   uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+
+print("Moda: ")
+print(mode(v))
+
+print("Mediana: ")
+print(median(v))
+
+
+#b
+
+
+hist(v,xlab = "Valori aleatoare repartizate 𝑁(1; 0,3).",col = "green")
+
+
+#Exercitiul 4 - Varianta cu package
+
+install.packages("matrixcalc")
+
+library(matrixcalc)
+x<-1:15
+y<-1:15
+
+m <- outer (
+   x,    
+   y,    
+   function (i, j)   1/sqrt((i+1)*(j+1))
+);
+
+print(m)
+
+n <- outer (
+   x,    
+   y,    
+   function (i, j)   (i+1)/(j+1)
+);
+
+print(n)
+
+mn <- tcrossprod(m,n)
+print(mn)
+
+if(is.singular.matrix(mn))
+{
+    print("MN nu e inversabila!")
+} else
+{
+    print("MN e inversabila!")
+}
+
+#Exercitiul 4 - Varianta fara package
+
+x<-1:15
+y<-1:15
+
+m <- outer (
+   x,    
+   y,    
+   function (i, j)   1/sqrt((i+1)*(j+1))
+);
+
+print(m)
+
+n <- outer (
+   x,    
+   y,    
+   function (i, j)   (i+1)/(j+1)
+);
+
+print(n)
+
+mn <- m%*%n
+print(mn)
+
+if(det(mn)>0)
+{
+    print("Matricea MN este inversabila!")
+} else
+{
+    print("Matricea MN nu este inversabila!")
+}
+
