@@ -1,4 +1,4 @@
-# Good-Vibrations(https://github.com/rimihai2001/Good-Vibrations)
+# [Good-Vibrations](https://github.com/rimihai2001/Good-Vibrations)
 Developed by [Radu-Ioan Mihai](https://github.com/rimihai2001), [Emil-Bogdan Popel](https://github.com/BogdanPopel) and [Maria-Raluca Stanescu](https://github.com/maria-raluca-st) for the Software Development Methods Course Project.
 
 ## App Description
